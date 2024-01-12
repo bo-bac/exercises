@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33815.320
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".solution items", ".solution items", "{BA50CBF7-CF6E-4CD9-8769-EC06B747DD62}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Distance.Api", "Distance.Api\Distance.Api.csproj", "{518D671A-E7E5-42A1-A9D5-9E80CC1D924F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Distance.Api.Tests", "Distance.Api.Tests\Distance.Api.Tests.csproj", "{3DF63770-F567-4ABE-9886-CE6FF4DD8709}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{518D671A-E7E5-42A1-A9D5-9E80CC1D924F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{518D671A-E7E5-42A1-A9D5-9E80CC1D924F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{518D671A-E7E5-42A1-A9D5-9E80CC1D924F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{518D671A-E7E5-42A1-A9D5-9E80CC1D924F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DF63770-F567-4ABE-9886-CE6FF4DD8709}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DF63770-F567-4ABE-9886-CE6FF4DD8709}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DF63770-F567-4ABE-9886-CE6FF4DD8709}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DF63770-F567-4ABE-9886-CE6FF4DD8709}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E929B5F6-8CD2-4570-9CE9-23FEAF03D113}
+	EndGlobalSection
+EndGlobal
