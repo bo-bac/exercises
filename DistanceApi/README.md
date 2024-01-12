@@ -1,4 +1,4 @@
-# Distance.Api
+# DistanceApi
 This ejercicio was requested by CTeleport
 
 >REST service to measure distance in miles between two airports. Airports are identified by 3-letter IATA code.
@@ -16,7 +16,7 @@ GET http://localhost:62803/between/AMS&VLC HTTP/1.1
 ```
 
 ## Tags
-`.net core` `c#` `web api` `external api` `exe` `self-hosted` `xunit`
+`.net core` `c#` `asp.net core` `web api` `minimal api` `external api` `exe` `self-hosted` `xunit`
 
 ## Go Ahead
 ...
