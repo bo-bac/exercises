@@ -1,0 +1,48 @@
+﻿@attribute [AllowAnonymous]
+@page "/authentication/{action}"
+
+<RemoteAuthenticatorView Action="@Action">
+    <LoggingIn>
+        You are about to be redirected to Identity Provider authority...
+    </LoggingIn>
+    <LogInFailed>
+        Login failed
+    </LogInFailed>
+    <LogOutSucceeded>
+        
+    </LogOutSucceeded>
+</RemoteAuthenticatorView>
+
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Navigation
+
+@code {
+    [Parameter]
+    public string Action { get; set; } = default!;
+
+    [CascadingParameter] Task<AuthenticationState> authState { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (RemoteAuthenticationActions.IsAction(RemoteAuthenticationActions.LogIn, Action))
+        {
+        }
+        else if (RemoteAuthenticationActions.IsAction(RemoteAuthenticationActions.LogInCallback, Action))
+        {
+        }
+        else if (RemoteAuthenticationActions.IsAction(RemoteAuthenticationActions.LogOut, Action))
+        {                  
+        }
+        else if (RemoteAuthenticationActions.IsAction(RemoteAuthenticationActions.LogOutCallback, Action))
+        {
+        }
+        else if (RemoteAuthenticationActions.IsAction(RemoteAuthenticationActions.LogOutSucceeded, Action))
+        {            
+        }
+    }
+}

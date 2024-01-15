@@ -1,0 +1,20 @@
+﻿@{
+    ViewData["Title"] ??= "Top secret";
+}
+<h1>@ViewData["Title"]</h1>
+
+<p>Top secret data here.</p>
+
+<h3>Identity Name: @(User.Identity.Name)</h3>
+
+<h3>Identity Claims:</h3>
+@foreach (var claim in User?.Claims)
+{
+    <p class="claim">@(claim.Type): @claim.Value</p>
+}
+
+<h3>Id Token: @(ViewBag.IdToken != null ? "" : "No")</h3>
+<div>@ViewBag.IdToken</div>
+
+<h3>Access Token: @(ViewBag.AccessToken != null ? "" : "No")</h3>
+<div>@ViewBag.AccessToken</div>

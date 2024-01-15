@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33927.249
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Goa.Ui.Mvc.G.OpenIdConnect", "Goa.Ui.Mvc.G.OpenIdConnect\Goa.Ui.Mvc.G.OpenIdConnect.csproj", "{A1EF6AFA-9954-47E8-939A-FDC46299C1AD}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Goa.Ui.Mvc.Ms.OpenIdConnect", "Goa.Ui.Mvc.Ms.OpenIdConnect\Goa.Ui.Mvc.Ms.OpenIdConnect.csproj", "{3FCEBD31-4B58-4FDA-B771-A3AE90092AEE}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Goa.Ui.Mvc.Ms.OAuth", "Goa.Ui.Mvc.Ms.OAuth\Goa.Ui.Mvc.Ms.OAuth.csproj", "{329D55DD-4028-4B37-AEA2-06B463342556}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Goa.Api", "Goa.Api\Goa.Api.csproj", "{DD42A22E-2F10-4EDA-8D24-E1413BB710A5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Goa.Ui.BlazorWebAssembly", "Goa.Ui.BlazorWebAssembly\Goa.Ui.BlazorWebAssembly.csproj", "{1D5F0CE0-ACD3-4101-B6E1-9325E107B646}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".doc", ".doc", "{A35A39A1-6483-4ACF-8CA8-11E02EEF9103}"
+	ProjectSection(SolutionItems) = preProject
+		..\README.md = ..\README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A1EF6AFA-9954-47E8-939A-FDC46299C1AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1EF6AFA-9954-47E8-939A-FDC46299C1AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1EF6AFA-9954-47E8-939A-FDC46299C1AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1EF6AFA-9954-47E8-939A-FDC46299C1AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3FCEBD31-4B58-4FDA-B771-A3AE90092AEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3FCEBD31-4B58-4FDA-B771-A3AE90092AEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3FCEBD31-4B58-4FDA-B771-A3AE90092AEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3FCEBD31-4B58-4FDA-B771-A3AE90092AEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{329D55DD-4028-4B37-AEA2-06B463342556}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{329D55DD-4028-4B37-AEA2-06B463342556}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{329D55DD-4028-4B37-AEA2-06B463342556}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{329D55DD-4028-4B37-AEA2-06B463342556}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD42A22E-2F10-4EDA-8D24-E1413BB710A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD42A22E-2F10-4EDA-8D24-E1413BB710A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD42A22E-2F10-4EDA-8D24-E1413BB710A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD42A22E-2F10-4EDA-8D24-E1413BB710A5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1D5F0CE0-ACD3-4101-B6E1-9325E107B646}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1D5F0CE0-ACD3-4101-B6E1-9325E107B646}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1D5F0CE0-ACD3-4101-B6E1-9325E107B646}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1D5F0CE0-ACD3-4101-B6E1-9325E107B646}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D06D8BEB-F249-4A6D-83A8-A5ACA6942816}
+	EndGlobalSection
+EndGlobal
