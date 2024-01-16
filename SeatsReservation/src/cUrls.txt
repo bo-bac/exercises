@@ -1,0 +1,42 @@
+Please add the cURLs of your tests here:
+
+If we had to follow orthodox REST it would be something like
+
+GET  /showtimes
+POST /showtimes
+GET  /showtimes/{id}
+
+GET  /showtimes/{id}/tickets
+POST /showtimes/{id}/tickets
+PUT|PATCH  /showtimes/{id}/tickets/{tid}  - to buy, !!! but from requeremetnts we need tid only to buy
+
+GET  /showtimes/{id}/tickets/{tid}?reserved
+
+-------------------------------------------------------------
+
+but I suppouse we dont so proposed API is
+(looks easier and more selfdescriptive, IMHO)
+
+GET  /showtimes
+curl \
+  --request GET \
+  https://localhost:7629/showtimes
+
+POST /showtimes
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{"session":"2024-12-01T00:00:00","auditorium":1,"movie":"ID-test1"}' \
+  https://localhost:7629/showtimes
+
+
+GET  /showtimes/{id}
+GET  /showtimes/{id}/tickets/{tid}
+
+POST /reservations
+curl --header "Content-Type: application/json" \
+  --request POST \
+  --data '{"showtimeId":1,"seats":[{"row":2,"number":5},{"row":2,"number":6}]}' \
+  https://localhost:7629/reservations
+
+GET  /reservations/{id}
+POST /reservations/{id}/confirm
