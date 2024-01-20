@@ -13,7 +13,6 @@ namespace Core;
 internal class Producer : IProducer
 {
     private const int RANDOM_COUNT = 16;
-    private const int HASH_COUNT = 40000;
 
     private readonly Db _db;
     private readonly ILogger<Producer> _logger;
@@ -65,7 +64,7 @@ internal class Producer : IProducer
     private IEnumerable<string> GenerateHashes()
     {
         using SHA1 sha1 = SHA1.Create();
-        for (var i = 0; i < HASH_COUNT; i++)
+        for (var i = 0; i < _options.HashCount; i++)
         {
             byte[] sourceBytes = RandomNumberGenerator.GetBytes(RANDOM_COUNT);
             byte[] hashBytes = sha1.ComputeHash(sourceBytes);
@@ -110,7 +109,7 @@ internal class Producer : IProducer
         //);
 
         watch.Stop();
-        _logger.LogInformation($"Total messages sent: {channel.NextPublishSeqNo - 1} for {watch.Elapsed.TotalMilliseconds} ms");
+        _logger.LogInformation($"Total messages sent: {channel.NextPublishSeqNo - 1} for {watch.ElapsedMilliseconds} ms");
 
 
         // todo: how to deel with DLQ

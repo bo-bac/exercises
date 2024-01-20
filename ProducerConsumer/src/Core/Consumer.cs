@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
+using System;
+using System.Diagnostics;
 using System.Text;
 
 namespace Core;
@@ -19,6 +21,7 @@ internal sealed class Consumer : IConsumer
     private readonly ConnectionFactory _connectionFactory;
 
     private readonly int[] _counter;
+    private long ms;
 
     public Consumer(
         ILogger<Producer> logger,
@@ -81,7 +84,7 @@ internal sealed class Consumer : IConsumer
     {
         return _counter
             .Select((v, i) => $" {i + 1}:{v}")
-            .Aggregate("Consumed by -", (s, next) => s + next);
+            .Aggregate($"Consumed {_counter.Sum()} for {ms}ms/{ms/60000}m by -", (s, next) => s + next);
     }
 
     public void Dispose()
@@ -146,6 +149,10 @@ internal sealed class Consumer : IConsumer
 
     private void Consumer_Received(object? sender, BasicDeliverEventArgs e)
     {
+        var sw = new Stopwatch();
+        sw.Start();
+
+
         if (sender is IBasicConsumer consumer)
         {
             try
@@ -160,7 +167,7 @@ internal sealed class Consumer : IConsumer
 
                 SaveToDb(message);
 
-                _logger.LogDebug("Consumed: {message}", message);
+                _logger.LogDebug("Consumed[{ch}:{thread}]: {message} tag:{tag}", id, Environment.CurrentManagedThreadId, message, e.DeliveryTag);
                 _counter[id - 1]++;
 
                 consumer.Model.BasicAck(e.DeliveryTag, false);
@@ -172,5 +179,9 @@ internal sealed class Consumer : IConsumer
                 _logger.LogError(ex.Message);
             }
         }
+
+
+        sw.Stop();
+        Interlocked.Add(ref ms, sw.ElapsedMilliseconds);
     }
 }
