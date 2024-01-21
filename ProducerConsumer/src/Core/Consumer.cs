@@ -155,29 +155,29 @@ internal sealed class Consumer : IConsumer
 
         if (sender is IBasicConsumer consumer)
         {
+            int id = consumer.Model.ChannelNumber;
+
+            _logger.LogDebug("Consumer {id}: processing started...", id);
+
+            // do some time consuming processing here
+            var body = e.Body.ToArray();
+            var message = Encoding.UTF8.GetString(body);
+
             try
             {
-                int id = consumer.Model.ChannelNumber;
-
-                _logger.LogDebug("Consumer {id}: processing started...", id);
-
-                // do some time consuming processing here
-                var body = e.Body.ToArray();
-                var message = Encoding.UTF8.GetString(body);
-
                 SaveToDb(message);
+                consumer.Model.BasicAck(e.DeliveryTag, false);
 
                 _logger.LogDebug("Consumed[{ch}:{thread}]: {message} tag:{tag}", id, Environment.CurrentManagedThreadId, message, e.DeliveryTag);
                 _counter[id - 1]++;
-
-                consumer.Model.BasicAck(e.DeliveryTag, false);
-
-                _logger.LogDebug("Consumer {id}: processing ended.", id);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex.Message);
+                consumer.Model.BasicNack(e.DeliveryTag, false, requeue:true);
             }
+
+            _logger.LogDebug("Consumer {id}: processing ended.", id);
         }
 
 
