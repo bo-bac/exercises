@@ -19,7 +19,7 @@ namespace Consumer
         {
             stoppingToken.ThrowIfCancellationRequested();
 
-            _consumer.StartConsume();
+            await _consumer.StartConsume();
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -28,11 +28,10 @@ namespace Consumer
             }
         }
 
-        public override void Dispose()
+        public override async Task StopAsync(CancellationToken cancellationToken)
         {
-            _consumer.Dispose();
-
-            base.Dispose();
+            await _consumer.StopConsume();
+            await base.StopAsync(cancellationToken);
         }
     }
 }

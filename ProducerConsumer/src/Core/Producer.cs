@@ -5,6 +5,8 @@ using RabbitMQ.Client.Events;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Metrics;
+using System.Net.Sockets;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -14,14 +16,25 @@ internal class Producer : IProducer
 {
     private const int RANDOM_COUNT = 16;
 
+    static readonly Random s_random = new();
+    static readonly Func<AddressFamily, ITcpClient> s_socketFactory = (AddressFamily af) =>
+    {
+        var socket = new Socket(af, SocketType.Stream, ProtocolType.Tcp)
+        {
+            NoDelay = true,
+        };
+        return new TcpClientAdapter(socket);
+    };
+
     private readonly Db _db;
     private readonly ILogger<Producer> _logger;
     private readonly Options _options;
-
     private readonly ConnectionFactory _connectionFactory;
 
     private readonly MessageBox _messagesToPublish = new();
     private readonly DeadLetterQueue _failedMessages = new();
+
+    private int _counter;
 
     public Producer(
         ILogger<Producer> logger,
@@ -32,11 +45,13 @@ internal class Producer : IProducer
         _options = options.Value;
         _db = db;
 
+        
         _connectionFactory = new ConnectionFactory
         {
             HostName = _options.BrokerHost,
             AutomaticRecoveryEnabled = true,
-            NetworkRecoveryInterval = TimeSpan.FromSeconds(_options.NetworkRecoveryInterval)
+            NetworkRecoveryInterval = TimeSpan.FromSeconds(_options.NetworkRecoveryInterval),
+            SocketFactory = s_socketFactory
         };
     }
 
@@ -55,10 +70,10 @@ internal class Producer : IProducer
         };
     }
 
-    public void Produce()
+    public async Task Produce()
     {
         var messages = GenerateHashes();
-        Publish(messages);
+        await Publish(messages);
     }
 
     private IEnumerable<string> GenerateHashes()
@@ -73,137 +88,171 @@ internal class Producer : IProducer
         }
     }
 
-    private void Publish(IEnumerable<string> messages)
+    private string GetKey(IConnection connection, IChannel channel) => $"{connection.ClientProvidedName}-{channel.ChannelNumber}";
+
+    private async Task Publish(IEnumerable<string> messages)
     {
+        var publishTasks = new List<Task>();
         var watch = Stopwatch.StartNew();
 
-        var name = $"{_options.AppId}-PRODUCE-0";
-        using var connection = _connectionFactory.CreateConnection(name);
-
-        using var channel = connection.CreateModel();
-        channel.ContinuationTimeout = TimeSpan.FromSeconds(_options.ContinuationTimeout);
-        channel.BasicAcks += Channel_BasicAcks;
-        channel.BasicNacks += Channel_BasicNacks;
-
-        channel.QueueDeclare(
-            queue: _options.QueueName,
-            durable: true,
-            exclusive: false,
-            autoDelete: false,
-            arguments: null);
-
-        // NextPublishSeqNo will be set to 1
-        channel.ConfirmSelect();
-
-        foreach (var batch in messages.Chunk(_options.BatchSize))
+        var publishConnections = new List<IConnection>();
+        for (int i = 0; i < _options.XPublishers; i++)
         {
-            PublishBatch(channel.NextPublishSeqNo, batch, channel.CreateBasicProperties(), channel.CreateBasicPublishBatch());
-
-            channel.WaitForConfirmsOrDie();
+            IConnection publishConnection = await _connectionFactory.CreateConnectionAsync($"{_options.AppId}-PRODUCE-{i}");
+            publishConnections.Add(publishConnection);
         }
 
-        //await WaitUntilConditionMet(
-        //    () => Task.FromResult(_messagesToPublish.IsEmpty),
-        //    TimeOut,
-        //    "All messages could not be confirmed in 60 seconds"
-        //);
+        try
+        {
+            await Parallel.ForEachAsync(messages.Chunk(_options.BatchSize), (batch, ct) =>
+            {
+                int idx = s_random.Next(publishConnections.Count);
+                IConnection connection = publishConnections[idx];
 
-        watch.Stop();
-        _logger.LogInformation($"Total messages sent: {channel.NextPublishSeqNo - 1} for {watch.ElapsedMilliseconds} ms");
+                publishTasks.Add(Task.Run(async () =>
+                {
+                    using IChannel channel = await connection.CreateChannelAsync();
+                    channel.ContinuationTimeout = TimeSpan.FromSeconds(_options.ContinuationTimeout);
+                    channel.BasicAcks += (object? sender, BasicAckEventArgs e) => Channel_BasicAcks(new { Channel = sender, Session = connection }, e);
+                    channel.BasicNacks += (object? sender, BasicNackEventArgs e) => Channel_BasicNacks(new { Channel = sender, Session = connection }, e);
 
+                    await channel.ConfirmSelectAsync();
+
+                    foreach (var message in batch)
+                    {
+                        ReadOnlyMemory<byte> body = Encoding.UTF8.GetBytes(message);
+                        var properties = new BasicProperties
+                        {
+                            AppId = _options.AppId,
+                            Persistent = true,
+                            MessageId = message
+                        };
+
+                        var key = GetKey(connection, channel);
+                        var seqno = channel.NextPublishSeqNo;
+                        _messagesToPublish.AddMessage(key, seqno, message);
+
+                        await channel.BasicPublishAsync(
+                            exchange: string.Empty,
+                            routingKey: _options.QueueName,
+                            basicProperties: properties,
+                            body: body,
+                            mandatory: true);
+                    }
+
+                    await channel.WaitForConfirmsOrDieAsync();
+
+                    _logger.LogDebug("Channel {number} done publishing and waiting for confirms", channel.ChannelNumber);
+                }));
+
+                return ValueTask.CompletedTask;
+            });
+
+            await Task.WhenAll(publishTasks.ToArray());
+            watch.Stop();
+
+            _logger.LogInformation($"Total messages sent: {_counter} for {watch.ElapsedMilliseconds} ms by {_options.XPublishers} connections");
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e.Message);
+        }
+        finally
+        {
+            foreach (IConnection c in publishConnections)
+            {
+                _logger.LogDebug("Closing connection: {0}", c.ClientProvidedName);
+
+                await c.CloseAsync();
+            }
+        }
 
         // todo: how to deel with DLQ
         if (_failedMessages.Any())
         {
-            Publish(_failedMessages.Get(_options.BatchSize));
+            await Publish(_failedMessages.Get(_options.BatchSize));
         }
-    }
-
-    private void PublishBatch(
-        ulong secNo,
-        IReadOnlyCollection<string> messages,
-        IBasicProperties properties,
-        IBasicPublishBatch batch)
-    {
-        properties.AppId = _options.AppId;
-        properties.Persistent = true;
-        //properties.Headers = envelope.Metadata;
-        //properties.ContentType = "application/json";
-        //properties.Type = TypeMapper.GetTypeName(envelope.Message.GetType());
-        //properties.MessageId = envelope.Message.MessageId.ToString();
-
-        foreach (var message in messages)
-        {
-            ReadOnlyMemory<byte> body = Encoding.UTF8.GetBytes(message);
-
-            batch.Add(
-                exchange: string.Empty,
-                routingKey: _options.QueueName,
-                mandatory: true,
-                properties: properties,
-                body: body
-            );
-
-            _messagesToPublish.AddMessage(secNo++, message);
-        }
-
-        // Publish the batch of messages in a single transaction,
-        // After publishing publish messages sequence number will be incremented.
-        // internally will assign NextPublishSeqNo for each message and them to pendingDeliveryTags collection                
-        batch.Publish();
     }
 
     private void Channel_BasicAcks(object? sender, BasicAckEventArgs e)
     {
-        if (_messagesToPublish.TryGetMessage(e.DeliveryTag, out string message))
+        dynamic? s = sender;
+        if (s?.Channel is IChannel channel && s?.Session is IConnection connection)
         {
-            _messagesToPublish.RemovedMessage(e.DeliveryTag, e.Multiple);
-        }
+            var key = GetKey(connection, channel);
+            var seqno = e.DeliveryTag;
+            if (_messagesToPublish.TryGetMessage(key, seqno, out string? message))
+            {
+                var removed = _messagesToPublish.RemovedMessage(key, seqno, e.Multiple);
+                Interlocked.Add(ref _counter, removed);
+            }
 
-        _logger.LogDebug(
-            $"Message '{message}' with delivery tag '{e.DeliveryTag}' ack-ed, multiple is {e.Multiple}."
-        );
+            _logger.LogDebug(
+                $"Channel[{channel.ChannelNumber}]: Message '{message}' with delivery tag '{e.DeliveryTag}' ack-ed, multiple is {e.Multiple}."
+            );
+        }
     }
 
     private void Channel_BasicNacks(object? sender, BasicNackEventArgs e)
     {
-        if (_messagesToPublish.TryGetMessage(e.DeliveryTag, out string message))
+        dynamic? s = sender;
+        if (s?.Channel is IChannel channel && s?.Session is IConnection connection)
         {
-            _messagesToPublish.RemovedMessage(e.DeliveryTag, e.Multiple);
-            _failedMessages.Add(message);
-        }
+            var key = GetKey(connection, channel);
+            var seqno = e.DeliveryTag;
+            if (_messagesToPublish.TryGetMessage(key, seqno, out string? message))
+            {
+                _messagesToPublish.RemovedMessage(key, seqno, e.Multiple);
+                _failedMessages.Add(message);
+            }
 
-        _logger.LogWarning(
-            $"Message '{message}' with delivery tag '{e.DeliveryTag}' nack-ed, multiple is {e.Multiple}."
-        );
+            _logger.LogWarning(
+                $"Message '{message}' with delivery tag '{e.DeliveryTag}' nack-ed, multiple is {e.Multiple}."
+            );
+        }
     }
 }
 
 internal class MessageBox
 {
-    private readonly ConcurrentDictionary<ulong, string> _box = new();
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<ulong, string>> _box = new();
 
-    public void RemovedMessage(ulong sequenceNumber, bool multiple)
+    public int RemovedMessage(string key, ulong seqno, bool multiple)
     {
-        if (multiple)
+        int res = 0;
+        void remove(ulong key, ConcurrentDictionary<ulong, string> dic)
         {
-            var confirmed = _box.Where(k => k.Key <= sequenceNumber);
-            foreach (var entry in confirmed)
+            if (dic.TryRemove(key, out _)) res++;
+        }
+
+        if (_box.TryGetValue(key, out var seq))
+        {
+            if (multiple)
             {
-                _box.TryRemove(entry.Key, out _);
+                var confirmed = seq.Where(k => k.Key <= seqno);
+                foreach (var entry in confirmed)
+                {
+                    remove(entry.Key, seq);
+                }
+            }
+            else
+            {
+                remove(seqno, seq);
             }
         }
-        else
-        {
-            _box.TryRemove(sequenceNumber, out _);
-        }
+
+        return res;
     }
 
-    public bool AddMessage(ulong sequenceNumber, string message)
-        => _box.TryAdd(sequenceNumber, message);
+    public bool AddMessage(string key, ulong seqno, string message) =>
+        _box.GetOrAdd(key, new ConcurrentDictionary<ulong, string>()).TryAdd(seqno, message);
 
-    public bool TryGetMessage(ulong sequenceNumber, [NotNullWhen(true)] out string message)
-        => _box.TryGetValue(sequenceNumber, out message!);
+
+    public bool TryGetMessage(string key, ulong seqno, [NotNullWhen(true)] out string? message)
+    {
+        message = default;
+        return _box.TryGetValue(key, out var seq) && seq.TryGetValue(seqno, out message);
+    }
 }
 
 internal class DeadLetterQueue

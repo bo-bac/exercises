@@ -1,9 +1,9 @@
 ﻿namespace Core;
 
-public interface IConsumer : IDisposable
+public interface IConsumer : IAsyncDisposable
 {
-    void StartConsume();
-    void StopConsume();
+    Task StartConsume();
+    Task StopConsume();
 
     string GetStatistics();
 }

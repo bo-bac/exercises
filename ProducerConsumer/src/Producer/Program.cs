@@ -5,7 +5,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddProducer(() => new()
 {
-    Options = (options) => builder.Configuration.Bind(options),
+    Options = (options) =>
+    {
+        options.XPublishers = Environment.ProcessorCount;
+        builder.Configuration.Bind(options);
+    },
     ConnectionString = builder.Configuration.GetConnectionString("ProducerConsumer")!
 });
 
@@ -23,9 +27,9 @@ app.MapGet("/hashes", ([FromServices] IProducer producer) =>
     return producer.GetProducedSummary();
 });
 
-app.MapPost("/hashes", ([FromServices] IProducer producer) =>
+app.MapPost("/hashes", async([FromServices] IProducer producer) =>
 {
-    producer.Produce();
+    await producer.Produce();
 });
 
 app.Run();

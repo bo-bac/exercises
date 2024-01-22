@@ -2,6 +2,6 @@
 
 public interface IProducer
 {
-    void Produce();
+    Task Produce();
     Summary GetProducedSummary();
 }
