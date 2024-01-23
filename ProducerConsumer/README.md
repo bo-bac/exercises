@@ -1,5 +1,5 @@
 # Producer-Consumer
-This ejercicio fron one company in NZ.
+This ejercicio from Emsisoft.
 
 ---
 
