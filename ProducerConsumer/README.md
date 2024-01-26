@@ -69,6 +69,13 @@ powershell
 docker-compose down
 ```
 
+2. RabbitMQ console
+`http://localhost:15672/`
+
+3. API 
+ - `GET http://localhost:5062/hashes`
+ - `POST http://localhost:5062/hashes`
+
 
 ## Tags
 `.net core` `c#` `asp.net core` `web api` `minimal api` `background worker` `rabbitmq` `producer-consumer` `batch producing` `parallel consuming` `ef` `model first`
