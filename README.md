@@ -12,3 +12,4 @@ Might be considered as a kind of portfolio :dash:
 | [ProducerConsumer](https://github.com/bo-bac/exercises/blob/main/ProducerConsumer/)				| `.net core` `c#` `asp.net core` `web api` `minimal api` `background worker` `rabbitmq` `producer-consumer` `batch producing` `parallel consuming` `concurrency` `ef` `model first`  |
 | [HyperLinkDisarmer](https://github.com/bo-bac/exercises/blob/main/HyperLinkDisarmer/)				| `.net core` `c#` `background worker` `filesystemwatcher` `concurrency`  |
 | [RequestsThrottling](https://github.com/bo-bac/exercises/blob/main/RequestsThrottling/)			| `.net core` `c#` `asp.net core` `web api` `minimal api` `xUnit` `integration test` `mvc testing` `webapplicationfactory` `testhost` `middleware` `limited concurrent queue` `slim semaphore` `interlocked`  |
+| [NetSDRHost](https://github.com/bo-bac/exercises/blob/main/NetSDRHost/)			| `.net core` `c#` `tcp` `udp` `xUnit` `Benchmark` |
